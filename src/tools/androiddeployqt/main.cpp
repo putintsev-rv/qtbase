@@ -829,7 +829,16 @@ bool readInputFile(Options *options)
         options->ndkHost = ndkHost.toString();
     }
 
-    options->packageName = packageNameFromAndroidManifest(options->androidSourceDirectory + QLatin1String("/AndroidManifest.xml"));
+    QString androidFullManifestsPath = options->outputDirectory + QLatin1String("/build/intermediates/manifests/full/debug/AndroidManifest.xml");
+    if (QFile::exists(androidFullManifestsPath)) {
+        options->packageName = packageNameFromAndroidManifest(androidFullManifestsPath);
+        if (options->verbose)
+            fprintf(stdout, "Read manifest full\n");
+    } else {
+        options->packageName = packageNameFromAndroidManifest(options->androidSourceDirectory + QLatin1String("/AndroidManifest.xml"));
+        if (options->verbose)
+            fprintf(stdout, "Read manifest default\n");
+    }
 
     if (options->packageName.isEmpty())
         options->packageName = cleanPackageName(QString::fromLatin1("org.qtproject.example.%1").arg(QFileInfo(options->applicationBinary).baseName().mid(sizeof("lib") - 1)));
