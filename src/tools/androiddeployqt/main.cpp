@@ -830,6 +830,7 @@ bool readInputFile(Options *options)
     }
 
     options->packageName = packageNameFromAndroidManifest(options->androidSourceDirectory + QLatin1String("/AndroidManifest.xml"));
+
     if (options->packageName.isEmpty())
         options->packageName = cleanPackageName(QString::fromLatin1("org.qtproject.example.%1").arg(QFileInfo(options->applicationBinary).baseName().mid(sizeof("lib") - 1)));
 
@@ -2328,10 +2329,17 @@ enum PackageType {
 QString apkPath(const Options &options, PackageType pt)
 {
     QString path(options.outputDirectory);
-    if (options.gradle)
-        path += QLatin1String("/build/outputs/apk/") + QDir(options.outputDirectory).dirName() + QLatin1Char('-');
-    else
+
+    if (options.gradle) {
+        path += QLatin1String("/build/outputs/apk/");
+        QString buildType(options.releasePackage ? QLatin1String("release/") : QLatin1String("debug/"));
+        if (QDir(path + buildType).exists())
+            path += buildType;
+        path += QDir(options.outputDirectory).dirName() + QLatin1Char('-');
+    } else {
         path += QLatin1String("/bin/QtApp-");
+    }
+
     if (options.releasePackage) {
         path += QLatin1String("release-");
         if (pt == UnsignedAPK)
@@ -2343,6 +2351,7 @@ QString apkPath(const Options &options, PackageType pt)
             path += QLatin1String("-signed");
         path += QLatin1String(".apk");
     }
+
     return shellQuote(path);
 }
 
